@@ -158,6 +158,18 @@ function M.apply_highlights(buf, lines, highlights, ns)
   end
 end
 
+local border_presets = {
+  horizontal = { "─", "─", "─", " ", "─", "─", "─", " " },
+  vertical = { " ", " ", " ", "│", " ", " ", " ", "│" },
+}
+
+local function _resolve_border(border)
+  if type(border) == "string" then
+    return border_presets[border] or border
+  end
+  return border
+end
+
 local function _compute_win_position(width, height, position, border)
   local border_h = border ~= "none" and 2 or 0
   local border_w = border ~= "none" and 2 or 0
@@ -270,7 +282,7 @@ function M.open()
   }
 
   if cfg.picker.border ~= "none" then
-    win_opts.border = cfg.picker.border
+    win_opts.border = _resolve_border(cfg.picker.border)
   end
 
   M.win = vim.api.nvim_open_win(M.buf, true, win_opts)
@@ -391,7 +403,7 @@ function M.peek(current_bufnr)
       col = col,
     }
     if cfg.peek.border ~= "none" then
-      reconfig.border = cfg.peek.border
+      reconfig.border = _resolve_border(cfg.peek.border)
     end
     vim.api.nvim_win_set_config(M.peek_win, reconfig)
   else
@@ -405,7 +417,7 @@ function M.peek(current_bufnr)
       focusable = false,
     }
     if cfg.peek.border ~= "none" then
-      peek_opts.border = cfg.peek.border
+      peek_opts.border = _resolve_border(cfg.peek.border)
     end
     M.peek_win = vim.api.nvim_open_win(M.peek_buf, false, peek_opts)
   end
