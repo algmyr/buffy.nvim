@@ -8,6 +8,14 @@ local defaults = {
   max_height = 20,
   icons = true,
   auto_track = false,
+  picker = {
+    border = "none",
+    position = "top",
+  },
+  peek = {
+    border = "none",
+    position = "top",
+  },
 }
 
 --- @type BuffyConfig|nil

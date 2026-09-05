@@ -158,6 +158,24 @@ function M.apply_highlights(buf, lines, highlights, ns)
   end
 end
 
+local function _compute_win_position(width, height, position, border)
+  local border_h = border ~= "none" and 2 or 0
+  local border_w = border ~= "none" and 2 or 0
+
+  local col = math.floor((vim.o.columns - width - border_w) / 2)
+
+  local row
+  if position == "center" then
+    row = math.floor((vim.o.lines - height - border_h) / 2)
+  elseif position == "bottom" then
+    row = vim.o.lines - height - border_h - 2
+  else
+    row = 0
+  end
+
+  return row, col
+end
+
 --- Refresh the buffer contents and highlights for an already-open picker.
 function M.render()
   if not M.is_open() or not M.buf or not vim.api.nvim_buf_is_valid(M.buf) then
@@ -237,18 +255,25 @@ function M.open()
 
   local height = M.get_height()
   local width = vim.o.columns
+  local cfg = config.get()
 
-  local row = 0
-  local col = 0
+  local row, col =
+    _compute_win_position(width, height, cfg.picker.position, cfg.picker.border)
 
-  M.win = vim.api.nvim_open_win(M.buf, true, {
+  local win_opts = {
     relative = "editor",
     width = width,
     height = height,
     row = row,
     col = col,
     style = "minimal",
-  })
+  }
+
+  if cfg.picker.border ~= "none" then
+    win_opts.border = cfg.picker.border
+  end
+
+  M.win = vim.api.nvim_open_win(M.buf, true, win_opts)
 
   M.saved_guicursor = vim.o.guicursor
   vim.o.guicursor = "a:ver1"
@@ -339,7 +364,9 @@ function M.peek(current_bufnr)
 
   local width = math.min(max_width + 2, vim.o.columns - 4)
   local height = math.min(#lines, cfg.max_height)
-  local col = math.floor((vim.o.columns - width) / 2)
+
+  local row, col =
+    _compute_win_position(width, height, cfg.peek.position, cfg.peek.border)
 
   if not M.peek_buf or not vim.api.nvim_buf_is_valid(M.peek_buf) then
     M.peek_buf = vim.api.nvim_create_buf(false, true)
@@ -356,23 +383,31 @@ function M.peek(current_bufnr)
   M.apply_highlights(M.peek_buf, lines, highlights, ns)
 
   if M.peek_win and vim.api.nvim_win_is_valid(M.peek_win) then
-    vim.api.nvim_win_set_config(M.peek_win, {
+    local reconfig = {
       relative = "editor",
       width = width,
       height = height,
-      row = 0,
+      row = row,
       col = col,
-    })
+    }
+    if cfg.peek.border ~= "none" then
+      reconfig.border = cfg.peek.border
+    end
+    vim.api.nvim_win_set_config(M.peek_win, reconfig)
   else
-    M.peek_win = vim.api.nvim_open_win(M.peek_buf, false, {
+    local peek_opts = {
       relative = "editor",
       width = width,
       height = height,
-      row = 0,
+      row = row,
       col = col,
       style = "minimal",
       focusable = false,
-    })
+    }
+    if cfg.peek.border ~= "none" then
+      peek_opts.border = cfg.peek.border
+    end
+    M.peek_win = vim.api.nvim_open_win(M.peek_buf, false, peek_opts)
   end
 
   local sign_bg = vim.api.nvim_get_hl(0, { name = "SignColumn" }).bg
