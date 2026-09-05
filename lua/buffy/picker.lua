@@ -4,9 +4,7 @@ local state = require "buffy.state"
 local ui = require "buffy.ui"
 local config = require "buffy.config"
 
---- Select the currently highlighted buffer and close the picker.
-function M.select()
-  local bufnr = state.selected_bufnr
+local function _try_select_buf(bufnr)
   if bufnr and vim.api.nvim_buf_is_valid(bufnr) then
     M.close()
     vim.api.nvim_set_current_buf(bufnr)
@@ -14,13 +12,13 @@ function M.select()
   end
 end
 
+--- Select the currently highlighted buffer and close the picker.
+function M.select()
+  _try_select_buf(state.selected_bufnr)
+end
+
 function M.select_label(label)
-  local bufnr = ui.label_map[label]
-  if bufnr and vim.api.nvim_buf_is_valid(bufnr) then
-    M.close()
-    vim.api.nvim_set_current_buf(bufnr)
-    state.set_current(bufnr)
-  end
+  _try_select_buf(ui.label_map[label])
 end
 
 function M.toggle_quickpick()
