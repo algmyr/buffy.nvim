@@ -18,7 +18,7 @@ M.selected_bufnr = nil
 
 --- When true the picker also shows untracked buffers.
 --- @type boolean
-M.show_all = false
+M.show_all = true
 
 --- Provider used for vim.api queries (injected for testing).
 --- @type BufProvider|nil
@@ -260,7 +260,7 @@ function M.clear()
   M.hidden = {}
   M.current_idx = 1
   M.selected_bufnr = nil
-  M.show_all = false
+  M.show_all = true
 end
 
 return M
