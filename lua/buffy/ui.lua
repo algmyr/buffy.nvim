@@ -49,6 +49,10 @@ function M.close()
     vim.api.nvim_del_autocmd(M.autocmd)
     M.autocmd = nil
   end
+  if M.selection_autocmd then
+    vim.api.nvim_del_autocmd(M.selection_autocmd)
+    M.selection_autocmd = nil
+  end
   if M.saved_guicursor then
     vim.o.guicursor = M.saved_guicursor
     M.saved_guicursor = nil
@@ -117,17 +121,6 @@ function M.populate_lines()
     table.insert(M.buf_map, nil)
     table.insert(M.icon_highlights, { hl = nil, len = 0 })
   end
-end
-
---- Return the display index whose bufnr matches the current selection.
---- @return integer
-function M.get_display_idx()
-  for display_idx, bufnr in ipairs(M.buf_map) do
-    if bufnr == state.selected_bufnr then
-      return display_idx
-    end
-  end
-  return 1
 end
 
 --- Apply icon and path extmark highlights to a buffer.
@@ -220,8 +213,9 @@ function M.update_selection()
   local ns = vim.api.nvim_create_namespace "buffy_selection"
   vim.api.nvim_buf_clear_namespace(M.buf, ns, 0, -1)
 
-  local display_idx = M.get_display_idx()
-  if #M.lines > 0 and display_idx >= 1 and display_idx <= #M.lines then
+  local cursor = vim.api.nvim_win_get_cursor(M.win)
+  local display_idx = cursor[1]
+  if display_idx >= 1 and display_idx <= #M.buf_map then
     vim.api.nvim_buf_add_highlight(
       M.buf,
       ns,
@@ -230,7 +224,7 @@ function M.update_selection()
       0,
       -1
     )
-    vim.api.nvim_win_set_cursor(M.win, { display_idx, 0 })
+    state.selected_bufnr = M.buf_map[display_idx]
   end
 end
 
@@ -252,18 +246,6 @@ function M.open()
   vim.bo[M.buf].swapfile = false
 
   M.populate_lines()
-
-  local cur_buf = vim.api.nvim_get_current_buf()
-  for _, bufnr in ipairs(M.buf_map) do
-    if bufnr == cur_buf then
-      state.selected_bufnr = bufnr
-      break
-    end
-  end
-
-  if not state.selected_bufnr and #M.buf_map > 0 then
-    state.selected_bufnr = M.buf_map[1]
-  end
 
   local height = M.get_height()
   local width = vim.o.columns
@@ -307,6 +289,13 @@ function M.open()
   vim.wo[M.win].winhighlight = "Normal:BuffyFloat"
 
   local win = M.win
+  M.selection_autocmd = vim.api.nvim_create_autocmd("CursorMoved", {
+    callback = function()
+      if M.is_open() and M.win and vim.api.nvim_win_is_valid(win) then
+        M.update_selection()
+      end
+    end,
+  })
   M.autocmd = vim.api.nvim_create_autocmd("WinEnter", {
     callback = function()
       if vim.api.nvim_get_current_win() ~= win then

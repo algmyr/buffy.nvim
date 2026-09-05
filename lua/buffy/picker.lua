@@ -18,39 +18,6 @@ function M.close()
   ui.close()
 end
 
---- Move the selection down, wrapping to the top.
-function M.select_down()
-  if #ui.buf_map == 0 then
-    return
-  end
-  for i, b in ipairs(ui.buf_map) do
-    if b == state.selected_bufnr then
-      state.selected_bufnr = ui.buf_map[i + 1] or ui.buf_map[#ui.buf_map]
-      ui.render()
-      return
-    end
-  end
-  state.selected_bufnr = ui.buf_map[1]
-  ui.render()
-end
-
---- Move the selection up, wrapping to the bottom.
-function M.select_up()
-  if #ui.buf_map == 0 then
-    return
-  end
-  for i, b in ipairs(ui.buf_map) do
-    if b == state.selected_bufnr then
-      state.selected_bufnr = ui.buf_map[i - 1] or ui.buf_map[1]
-      ui.render()
-      return
-    end
-  end
-  state.selected_bufnr = ui.buf_map[1]
-  ui.render()
-end
-
---- Display the help overlay.
 function M.show_help()
   local lines = {
     "j/k     Move selection",
@@ -78,8 +45,8 @@ function M.setup_keymaps()
   vim.keymap.set("n", "q", M.close, opts)
   vim.keymap.set("n", "<Esc>", M.close, opts)
 
-  vim.keymap.set("n", "j", M.select_down, opts)
-  vim.keymap.set("n", "k", M.select_up, opts)
+  vim.keymap.set("n", "j", "j", opts)
+  vim.keymap.set("n", "k", "k", opts)
 
   vim.keymap.set("n", "J", function()
     if not state.is_tracked(state.selected_bufnr) then
