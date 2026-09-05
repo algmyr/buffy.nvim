@@ -2,32 +2,56 @@ local M = {}
 
 local state = require "buffy.state"
 local ui = require "buffy.ui"
+local config = require "buffy.config"
 
 --- Select the currently highlighted buffer and close the picker.
 function M.select()
   local bufnr = state.selected_bufnr
   if bufnr and vim.api.nvim_buf_is_valid(bufnr) then
-    ui.close()
+    M.close()
     vim.api.nvim_set_current_buf(bufnr)
     state.set_current(bufnr)
   end
 end
 
+function M.select_label(label)
+  local bufnr = ui.label_map[label]
+  if bufnr and vim.api.nvim_buf_is_valid(bufnr) then
+    M.close()
+    vim.api.nvim_set_current_buf(bufnr)
+    state.set_current(bufnr)
+  end
+end
+
+function M.toggle_quickpick()
+  state.quickpick = not state.quickpick
+  ui.render()
+end
+
+function M.exit_quickpick()
+  if state.quickpick then
+    state.quickpick = false
+    ui.render()
+  end
+end
+
 --- Close the picker.
 function M.close()
+  state.quickpick = false
   ui.close()
 end
 
 function M.show_help()
   local lines = {
-    "j/k     Move selection",
-    "J/K     Reorder buffer",
-    "<CR>/o  Select buffer",
-    "a       Add buffer to tracked list",
-    "d       Remove from list",
-    "x       Toggle hide",
-    "z       Toggle show all buffers",
-    "q/Esc   Close",
+    "j/k       Move selection",
+    "J/K       Reorder buffer",
+    "<CR>/o    Select buffer",
+    "<Space>   Quick-pick mode",
+    "a         Add buffer to tracked list",
+    "d         Remove from list",
+    "x         Toggle hide",
+    "z         Toggle show all buffers",
+    "q/Esc     Close",
   }
   vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO)
 end
@@ -43,12 +67,46 @@ function M.setup_keymaps()
   vim.keymap.set("n", "<CR>", M.select, opts)
   vim.keymap.set("n", "o", M.select, opts)
   vim.keymap.set("n", "q", M.close, opts)
-  vim.keymap.set("n", "<Esc>", M.close, opts)
+  vim.keymap.set("n", "<Esc>", function()
+    if state.quickpick then
+      M.exit_quickpick()
+    else
+      M.close()
+    end
+  end, opts)
+  vim.keymap.set("n", "<Space>", M.toggle_quickpick, opts)
 
-  vim.keymap.set("n", "j", "j", opts)
-  vim.keymap.set("n", "k", "k", opts)
+  vim.keymap.set("n", "j", function()
+    M.exit_quickpick()
+    vim.api.nvim_feedkeys("j", "n", false)
+  end, opts)
+  vim.keymap.set("n", "k", function()
+    M.exit_quickpick()
+    vim.api.nvim_feedkeys("k", "n", false)
+  end, opts)
+  vim.keymap.set("n", "<Down>", function()
+    M.exit_quickpick()
+    vim.api.nvim_feedkeys("<Down>", "n", false)
+  end, opts)
+  vim.keymap.set("n", "<Up>", function()
+    M.exit_quickpick()
+    vim.api.nvim_feedkeys("<Up>", "n", false)
+  end, opts)
+
+  local quickpick_chars = config.get().quickpick_chars
+  for i = 1, #quickpick_chars do
+    local char = quickpick_chars:sub(i, i)
+    vim.keymap.set("n", char, function()
+      if state.quickpick then
+        M.select_label(char)
+      else
+        vim.api.nvim_feedkeys(char, "n", false)
+      end
+    end, opts)
+  end
 
   vim.keymap.set("n", "J", function()
+    M.exit_quickpick()
     if not state.is_tracked(state.selected_bufnr) then
       return
     end
@@ -61,6 +119,7 @@ function M.setup_keymaps()
     end
   end, opts)
   vim.keymap.set("n", "K", function()
+    M.exit_quickpick()
     if not state.is_tracked(state.selected_bufnr) then
       return
     end
@@ -74,6 +133,7 @@ function M.setup_keymaps()
   end, opts)
 
   vim.keymap.set("n", "d", function()
+    M.exit_quickpick()
     if not state.is_tracked(state.selected_bufnr) then
       return
     end
@@ -81,12 +141,14 @@ function M.setup_keymaps()
     ui.render()
   end, opts)
   vim.keymap.set("n", "x", function()
+    M.exit_quickpick()
     if state.is_tracked(state.selected_bufnr) then
       state.toggle_hidden(state.selected_bufnr)
       ui.render()
     end
   end, opts)
   vim.keymap.set("n", "a", function()
+    M.exit_quickpick()
     if state.selected_bufnr and not state.is_tracked(state.selected_bufnr) then
       state.add_buffer(state.selected_bufnr)
       ui.render()

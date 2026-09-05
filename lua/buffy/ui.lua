@@ -24,6 +24,7 @@ M.saved_guicursor = nil
 
 --- @type integer|nil
 M.autocmd = nil
+M.label_map = {}
 
 --- @type integer|nil
 M.peek_buf = nil
@@ -74,6 +75,7 @@ function M.populate_lines()
   M.lines = {}
   M.buf_map = {}
   M.icon_highlights = {}
+  M.label_map = {}
 
   local bufs
   if state.show_all then
@@ -96,6 +98,7 @@ function M.populate_lines()
     bufs = state.get_all()
   end
 
+  local label_idx = 1
   for _, bufnr in ipairs(bufs) do
     if vim.api.nvim_buf_is_valid(bufnr) then
       local markers = ""
@@ -106,12 +109,24 @@ function M.populate_lines()
         markers = markers .. "-"
       end
       local entry = utils.get_entry_display(bufnr, cfg, markers)
-      table.insert(M.lines, entry.text)
+      local display = entry.text
+
+      local label = nil
+      local quickpick_chars = config.get().quickpick_chars
+      if state.quickpick and label_idx <= #quickpick_chars then
+        label = quickpick_chars:sub(label_idx, label_idx)
+        M.label_map[label] = bufnr
+        display = label .. ": " .. display
+        label_idx = label_idx + 1
+      end
+
+      table.insert(M.lines, display)
       table.insert(M.buf_map, bufnr)
       table.insert(M.icon_highlights, {
         hl = entry.icon_hl,
         len = entry.icon_len,
         path_start = entry.path_start,
+        label = label,
       })
     end
   end
@@ -131,21 +146,36 @@ end
 function M.apply_highlights(buf, lines, highlights, ns)
   vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
   for line_idx, info in ipairs(highlights) do
-    if info.hl and info.len > 0 then
+    if info.label then
       vim.api.nvim_buf_set_extmark(buf, ns, line_idx - 1, 0, {
-        end_col = info.len,
+        end_col = 1,
+        hl_group = "BuffyLabel",
+        priority = 300,
+      })
+    end
+    if info.hl and info.len > 0 then
+      local offset = info.label and 3 or 0
+      vim.api.nvim_buf_set_extmark(buf, ns, line_idx - 1, offset, {
+        end_col = offset + info.len,
         hl_group = info.hl,
         priority = 200,
       })
     end
     if info.path_start then
+      local offset = info.label and 3 or 0
       local line_len = #lines[line_idx]
-      if info.path_start < line_len then
-        vim.api.nvim_buf_set_extmark(buf, ns, line_idx - 1, info.path_start, {
-          end_col = line_len,
-          hl_group = "BuffyPath",
-          priority = 100,
-        })
+      if info.path_start + offset < line_len then
+        vim.api.nvim_buf_set_extmark(
+          buf,
+          ns,
+          line_idx - 1,
+          info.path_start + offset,
+          {
+            end_col = line_len,
+            hl_group = "BuffyPath",
+            priority = 100,
+          }
+        )
       end
     end
   end
@@ -286,6 +316,7 @@ function M.open()
   vim.api.nvim_set_hl(0, "BuffyFloat", { bg = sign_bg, fg = "#d4d4d4" })
   vim.api.nvim_set_hl(0, "BuffyPath", { fg = "#666666" })
   vim.api.nvim_set_hl(0, "BuffySelected", { bold = true })
+  vim.api.nvim_set_hl(0, "BuffyLabel", { fg = "#e5c07b", bold = true })
   vim.wo[M.win].winhighlight = "Normal:BuffyFloat"
 
   local win = M.win

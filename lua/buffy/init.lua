@@ -46,12 +46,15 @@ function M.setup(opts)
 end
 
 --- Toggle the floating picker window.
-function M.open_picker()
+function M.open_picker(opts)
   if ui.is_open() then
     ui.close()
   else
     ui.open()
     picker.setup_keymaps()
+    if opts and opts.quickpick then
+      picker.toggle_quickpick()
+    end
   end
 end
 

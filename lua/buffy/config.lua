@@ -8,6 +8,7 @@ local defaults = {
   max_height = 20,
   icons = true,
   auto_track = false,
+  quickpick_chars = "qwertyuiop1234567890",
   picker = {
     border = "none",
     position = "top",
