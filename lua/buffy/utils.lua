@@ -27,6 +27,13 @@ function M.is_modified(bufnr)
   return vim.bo[bufnr].modified
 end
 
+--- Return whether a buffer is read only.
+--- @param bufnr integer
+--- @return boolean
+function M.is_readonly(bufnr)
+  return vim.bo[bufnr].readonly or not vim.bo[bufnr].modifiable
+end
+
 --- Return the tail filename for a buffer.
 --- @param bufnr integer
 --- @return string
@@ -70,7 +77,7 @@ end
 --- @param bufnr integer
 --- @param config BuffyConfig
 --- @return BuffyDisplayResult
-function M.get_entry_display(bufnr, config)
+function M.get_entry_display(bufnr, config, markers)
   local parts = {}
   local icon_hl = nil
   local icon_len = 0
@@ -92,12 +99,27 @@ function M.get_entry_display(bufnr, config)
     path = path:sub(1, max_path - 3) .. "…"
   end
 
-  local path_start = icon_len + #filename + 2
-  table.insert(parts, filename .. "  " .. path)
-
-  if M.is_modified(bufnr) then
-    table.insert(parts, " [+]")
+  local is_untracked = markers and markers:find "-" ~= nil
+  if is_untracked then
+    filename = "(" .. filename .. ")"
   end
+
+  local marker_str = ""
+  if markers and markers:find "H" then
+    marker_str = marker_str .. "H"
+  end
+  if M.is_modified(bufnr) then
+    marker_str = marker_str .. "+"
+  end
+  if M.is_readonly(bufnr) then
+    marker_str = marker_str .. "="
+  end
+  if #marker_str > 0 then
+    marker_str = " [" .. marker_str .. "]"
+  end
+
+  local path_start = icon_len + #filename + #marker_str + 2
+  table.insert(parts, filename .. marker_str .. "  " .. path)
 
   return {
     text = table.concat(parts),

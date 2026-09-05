@@ -98,15 +98,15 @@ function M.populate_lines()
 
   for _, bufnr in ipairs(bufs) do
     if vim.api.nvim_buf_is_valid(bufnr) then
-      local entry = utils.get_entry_display(bufnr, cfg)
       local markers = ""
       if state.is_hidden(bufnr) then
-        markers = markers .. " [H]"
+        markers = markers .. "H"
       end
       if state.show_all and not state.is_tracked(bufnr) then
-        markers = markers .. " [-]"
+        markers = markers .. "-"
       end
-      table.insert(M.lines, entry.text .. markers)
+      local entry = utils.get_entry_display(bufnr, cfg, markers)
+      table.insert(M.lines, entry.text)
       table.insert(M.buf_map, bufnr)
       table.insert(M.icon_highlights, {
         hl = entry.icon_hl,
