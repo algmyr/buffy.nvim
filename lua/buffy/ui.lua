@@ -225,7 +225,7 @@ function M.update_selection()
     vim.api.nvim_buf_add_highlight(
       M.buf,
       ns,
-      "CursorLine",
+      "BuffySelected",
       display_idx - 1,
       0,
       -1
@@ -297,15 +297,13 @@ function M.open()
   local ns = vim.api.nvim_create_namespace "buffy_icons"
   M.apply_highlights(M.buf, M.lines, M.icon_highlights, ns)
 
-  vim.wo[M.win].cursorline = true
   vim.wo[M.win].wrap = false
   vim.wo[M.win].winfixbuf = true
 
-  local sign_bg = vim.api.nvim_get_hl(0, { name = "SignColumn" }).bg
-    or vim.api.nvim_get_hl(0, { name = "Normal" }).bg
-    or "#242424"
+  local sign_bg = vim.api.nvim_get_hl(0, { name = "Normal" }).bg or "#242424"
   vim.api.nvim_set_hl(0, "BuffyFloat", { bg = sign_bg, fg = "#d4d4d4" })
   vim.api.nvim_set_hl(0, "BuffyPath", { fg = "#666666" })
+  vim.api.nvim_set_hl(0, "BuffySelected", { bold = true })
   vim.wo[M.win].winhighlight = "Normal:BuffyFloat"
 
   local win = M.win
@@ -422,16 +420,14 @@ function M.peek(current_bufnr)
     M.peek_win = vim.api.nvim_open_win(M.peek_buf, false, peek_opts)
   end
 
-  local sign_bg = vim.api.nvim_get_hl(0, { name = "SignColumn" }).bg
-    or vim.api.nvim_get_hl(0, { name = "Normal" }).bg
-    or "#242424"
+  local sign_bg = vim.api.nvim_get_hl(0, { name = "Normal" }).bg or "#242424"
   vim.api.nvim_set_hl(0, "BuffyPeek", { bg = sign_bg, fg = "#d4d4d4" })
   vim.wo[M.peek_win].winhighlight = "Normal:BuffyPeek"
 
   vim.api.nvim_buf_add_highlight(
     M.peek_buf,
     ns,
-    "CursorLine",
+    "BuffySelected",
     current_line - 1,
     0,
     -1
