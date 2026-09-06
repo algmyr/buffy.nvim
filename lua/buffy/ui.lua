@@ -407,32 +407,22 @@ function M.peek(current_bufnr)
   local ns = vim.api.nvim_create_namespace "buffy_peek"
   M.apply_highlights(M.peek_buf, lines, highlights, ns)
 
+  local win_config = {
+    relative = "editor",
+    width = width,
+    height = height,
+    row = row,
+    col = col,
+  }
+  if cfg.peek.border ~= "none" then
+    win_config.border = _resolve_border(cfg.peek.border)
+  end
   if M.peek_win and vim.api.nvim_win_is_valid(M.peek_win) then
-    local reconfig = {
-      relative = "editor",
-      width = width,
-      height = height,
-      row = row,
-      col = col,
-    }
-    if cfg.peek.border ~= "none" then
-      reconfig.border = _resolve_border(cfg.peek.border)
-    end
-    vim.api.nvim_win_set_config(M.peek_win, reconfig)
+    vim.api.nvim_win_set_config(M.peek_win, win_config)
   else
-    local peek_opts = {
-      relative = "editor",
-      width = width,
-      height = height,
-      row = row,
-      col = col,
-      style = "minimal",
-      focusable = false,
-    }
-    if cfg.peek.border ~= "none" then
-      peek_opts.border = _resolve_border(cfg.peek.border)
-    end
-    M.peek_win = vim.api.nvim_open_win(M.peek_buf, false, peek_opts)
+    win_config.style = "minimal"
+    win_config.focusable = false
+    M.peek_win = vim.api.nvim_open_win(M.peek_buf, false, win_config)
   end
 
   vim.wo[M.peek_win].winhighlight = "Normal:BuffyPeek"
