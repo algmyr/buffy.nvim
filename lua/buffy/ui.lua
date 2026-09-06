@@ -37,6 +37,7 @@ M.peek_timer = nil
 --- @field hl string|nil Highlight group for the icon.
 --- @field len number Byte length of the icon string.
 --- @field path_start number|nil Byte offset where the path portion begins.
+--- @field label string|nil Quickpick label character.
 
 --- Return true if the picker window is open and valid.
 --- @return boolean
@@ -75,6 +76,7 @@ function M.populate_lines()
   M.lines = {}
   M.buf_map = {}
   M.icon_highlights = {}
+  --- @type table<string, integer>
   M.label_map = {}
 
   local bufs
