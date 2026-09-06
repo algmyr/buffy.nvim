@@ -1,10 +1,12 @@
 local M = {}
 
+local components = require "buffy.components"
+
 --- @class BuffyConfig
 --- @field max_height number Maximum number of visible lines in the picker.
---- @field icons boolean Whether to show file-type icons.
 --- @field auto_track boolean Automatically track buffers opened from the CLI.
 --- @field quickpick_chars string Characters available for quickpick labels.
+--- @field layout BuffyInput Component layout specification.
 --- @field picker BuffyPickerConfig Configuration for the main picker window.
 --- @field peek BuffyPickerConfig Configuration for the peek preview window.
 
@@ -14,9 +16,15 @@ local M = {}
 
 local defaults = {
   max_height = 20,
-  icons = true,
   auto_track = false,
   quickpick_chars = "qwertyuiop1234567890",
+  layout = {
+    components.icon,
+    components.filename,
+    components.markers,
+    "  ",
+    components.path,
+  },
   picker = {
     border = "none",
     position = "top",

@@ -1,8 +1,8 @@
 local M = {}
 
 local state = require "buffy.state"
-local utils = require "buffy.utils"
 local config = require "buffy.config"
+local compose = require "buffy.compose"
 
 --- @type integer|nil
 M.buf = nil
@@ -16,8 +16,8 @@ M.lines = {}
 --- @type (integer|nil)[]
 M.buf_map = {}
 
---- @type BuffyIconInfo[]
-M.icon_highlights = {}
+--- @type BuffyHighlight[][]
+M.entry_highlights = {}
 
 --- @type string|nil
 M.saved_guicursor = nil
@@ -32,12 +32,6 @@ M.peek_buf = nil
 M.peek_win = nil
 --- @type uv_timer_t|nil
 M.peek_timer = nil
-
---- @class BuffyIconInfo
---- @field hl string|nil Highlight group for the icon.
---- @field len number Byte length of the icon string.
---- @field path_start number|nil Byte offset where the path portion begins.
---- @field label string|nil Quickpick label character.
 
 --- Return true if the picker window is open and valid.
 --- @return boolean
@@ -69,13 +63,23 @@ function M.close()
   end
 end
 
---- Populate M.lines, M.buf_map, and M.icon_highlights from current state.
+--- Build a context table for a buffer.
+--- @param bufnr integer
+--- @return BuffyContext
+local function _make_ctx(bufnr)
+  return {
+    is_hidden = state.is_hidden(bufnr),
+    is_untracked = state.show_all and not state.is_tracked(bufnr),
+  }
+end
+
+--- Populate M.lines, M.buf_map, and M.entry_highlights from current state.
 function M.populate_lines()
   local cfg = config.get()
 
   M.lines = {}
   M.buf_map = {}
-  M.icon_highlights = {}
+  M.entry_highlights = {}
   --- @type table<string, integer>
   M.label_map = {}
 
@@ -103,83 +107,50 @@ function M.populate_lines()
   local label_idx = 1
   for _, bufnr in ipairs(bufs) do
     if vim.api.nvim_buf_is_valid(bufnr) then
-      local markers = ""
-      if state.is_hidden(bufnr) then
-        markers = markers .. "H"
-      end
-      if state.show_all and not state.is_tracked(bufnr) then
-        markers = markers .. "-"
-      end
-      local entry = utils.get_entry_display(bufnr, cfg, markers)
-      local display = entry.text
+      local ctx = _make_ctx(bufnr)
+      local spec = { unpack(cfg.layout) }
 
       local label = nil
-      local quickpick_chars = config.get().quickpick_chars
+      local quickpick_chars = cfg.quickpick_chars
       if state.quickpick and label_idx <= #quickpick_chars then
         label = quickpick_chars:sub(label_idx, label_idx)
         M.label_map[label] = bufnr
-        display = label .. ": " .. display
+        table.insert(
+          spec,
+          1,
+          { text = label .. ": ", hl = { "BuffyLabel", 300 } }
+        )
         label_idx = label_idx + 1
       end
 
-      table.insert(M.lines, display)
+      local components = compose.evaluate(spec, bufnr, ctx)
+      local text, highlights = compose.compose(components)
+
+      table.insert(M.lines, text)
       table.insert(M.buf_map, bufnr)
-      table.insert(M.icon_highlights, {
-        hl = entry.icon_hl,
-        len = entry.icon_len,
-        path_start = entry.path_start,
-        label = label,
-      })
+      table.insert(M.entry_highlights, highlights)
     end
   end
 
   if #M.lines == 0 then
     table.insert(M.lines, "No tracked buffers")
     table.insert(M.buf_map, nil)
-    table.insert(M.icon_highlights, { hl = nil, len = 0 })
+    table.insert(M.entry_highlights, {})
   end
 end
 
---- Apply icon and path extmark highlights to a buffer.
+--- Apply highlight extmarks to a buffer.
 --- @param buf integer Buffer handle.
---- @param lines string[] Lines displayed in the buffer.
---- @param highlights BuffyIconInfo[] Per-line highlight info.
+--- @param line_idx number Line index (0-based).
+--- @param highlights BuffyHighlight[] Highlight ranges for the line.
 --- @param ns integer Namespace id.
-function M.apply_highlights(buf, lines, highlights, ns)
-  vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
-  for line_idx, info in ipairs(highlights) do
-    if info.label then
-      vim.api.nvim_buf_set_extmark(buf, ns, line_idx - 1, 0, {
-        end_col = 1,
-        hl_group = "BuffyLabel",
-        priority = 300,
-      })
-    end
-    if info.hl and info.len > 0 then
-      local offset = info.label and 3 or 0
-      vim.api.nvim_buf_set_extmark(buf, ns, line_idx - 1, offset, {
-        end_col = offset + info.len,
-        hl_group = info.hl,
-        priority = 200,
-      })
-    end
-    if info.path_start then
-      local offset = info.label and 3 or 0
-      local line_len = #lines[line_idx]
-      if info.path_start + offset < line_len then
-        vim.api.nvim_buf_set_extmark(
-          buf,
-          ns,
-          line_idx - 1,
-          info.path_start + offset,
-          {
-            end_col = line_len,
-            hl_group = "BuffyPath",
-            priority = 100,
-          }
-        )
-      end
-    end
+local function _apply_line_highlights(buf, line_idx, highlights, ns)
+  for _, h in ipairs(highlights) do
+    vim.api.nvim_buf_set_extmark(buf, ns, line_idx, h.col, {
+      end_col = h.end_col,
+      hl_group = h.hl,
+      priority = h.priority,
+    })
   end
 end
 
@@ -227,12 +198,19 @@ function M.render()
     vim.api.nvim_win_set_height(M.win, new_height)
   end
 
-  local ns = vim.api.nvim_create_namespace "buffy_icons"
+  local ns_icons = vim.api.nvim_create_namespace "buffy_icons"
+  local ns_select = vim.api.nvim_create_namespace "buffy_selection"
+  vim.api.nvim_buf_clear_namespace(M.buf, ns_icons, 0, -1)
+  vim.api.nvim_buf_clear_namespace(M.buf, ns_select, 0, -1)
+
   vim.bo[M.buf].modifiable = true
   vim.api.nvim_buf_set_lines(M.buf, 0, -1, false, M.lines)
   vim.bo[M.buf].modifiable = false
 
-  M.apply_highlights(M.buf, M.lines, M.icon_highlights, ns)
+  for line_idx, highlights in ipairs(M.entry_highlights) do
+    _apply_line_highlights(M.buf, line_idx - 1, highlights, ns_icons)
+  end
+
   M.update_selection()
 end
 
@@ -309,7 +287,9 @@ function M.open()
   vim.bo[M.buf].modifiable = false
 
   local ns = vim.api.nvim_create_namespace "buffy_icons"
-  M.apply_highlights(M.buf, M.lines, M.icon_highlights, ns)
+  for line_idx, highlights in ipairs(M.entry_highlights) do
+    _apply_line_highlights(M.buf, line_idx - 1, highlights, ns)
+  end
 
   vim.wo[M.win].wrap = false
   vim.wo[M.win].winfixbuf = true
@@ -366,17 +346,15 @@ function M.peek(current_bufnr)
 
   local cfg = config.get()
   local lines = {}
-  local highlights = {}
+  local all_highlights = {}
   local current_line = 1
 
   for i, bufnr in ipairs(visible) do
-    local entry = utils.get_entry_display(bufnr, cfg)
-    table.insert(lines, entry.text)
-    table.insert(highlights, {
-      hl = entry.icon_hl,
-      len = entry.icon_len,
-      path_start = entry.path_start,
-    })
+    local ctx = _make_ctx(bufnr)
+    local components = compose.evaluate(cfg.layout, bufnr, ctx)
+    local text, highlights = compose.compose(components)
+    table.insert(lines, text)
+    table.insert(all_highlights, highlights)
     if bufnr == current_bufnr then
       current_line = i
     end
@@ -407,7 +385,9 @@ function M.peek(current_bufnr)
   vim.bo[M.peek_buf].modifiable = false
 
   local ns = vim.api.nvim_create_namespace "buffy_peek"
-  M.apply_highlights(M.peek_buf, lines, highlights, ns)
+  for line_idx, highlights in ipairs(all_highlights) do
+    _apply_line_highlights(M.peek_buf, line_idx - 1, highlights, ns)
+  end
 
   local win_config = {
     relative = "editor",
