@@ -11,6 +11,13 @@ function M.setup(opts)
   config.setup(opts)
   state.set_buf_provider(buf_provider)
 
+  local sign_bg = vim.api.nvim_get_hl(0, { name = "Normal" }).bg or "#242424"
+  vim.api.nvim_set_hl(0, "BuffyFloat", { bg = sign_bg, fg = "#d4d4d4" })
+  vim.api.nvim_set_hl(0, "BuffyPath", { fg = "#666666" })
+  vim.api.nvim_set_hl(0, "BuffySelected", { bold = true })
+  vim.api.nvim_set_hl(0, "BuffyLabel", { fg = "#e5c07b", bold = true })
+  vim.api.nvim_set_hl(0, "BuffyPeek", { bg = sign_bg, fg = "#d4d4d4" })
+
   local group = vim.api.nvim_create_augroup("Buffy", { clear = true })
 
   vim.api.nvim_create_autocmd("VimEnter", {
