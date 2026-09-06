@@ -34,37 +34,28 @@ function M.is_readonly(bufnr)
   return vim.bo[bufnr].readonly or not vim.bo[bufnr].modifiable
 end
 
---- Return the tail filename for a buffer.
---- @param bufnr integer
---- @return string
-function M.get_filename(bufnr)
-  local name = vim.api.nvim_buf_get_name(bufnr)
+--- Return both the tail filename and relative path for a buffer, fetching the
+--- name only once.
+--- @param name string
+--- @return string, string
+local function _get_name_parts(name)
   if name == "" then
-    return "[No Name]"
+    return "[No Name]", "[No Name]"
   end
-  return vim.fn.fnamemodify(name, ":t")
-end
 
---- Return a short, human-friendly path for a buffer.
---- @param bufnr integer
---- @return string
-function M.get_relative_path(bufnr)
-  local name = vim.api.nvim_buf_get_name(bufnr)
-  if name == "" then
-    return "[No Name]"
-  end
+  local filename = vim.fn.fnamemodify(name, ":t")
 
   local cwd = vim.fn.getcwd()
   if name:sub(1, #cwd) == cwd then
-    return name:sub(#cwd + 2)
+    return filename, name:sub(#cwd + 2)
   end
 
   local home = vim.fn.expand "~"
   if name:sub(1, #home) == home then
-    return "~/" .. name:sub(#home + 2)
+    return filename, "~/" .. name:sub(#home + 2)
   end
 
-  return name
+  return filename, name
 end
 
 --- @class BuffyDisplayResult
@@ -91,8 +82,8 @@ function M.get_entry_display(bufnr, config, markers)
     end
   end
 
-  local filename = M.get_filename(bufnr)
-  local path = M.get_relative_path(bufnr)
+  local name = vim.api.nvim_buf_get_name(bufnr)
+  local filename, path = _get_name_parts(name)
 
   local max_path = 60
   if #path > max_path then
