@@ -1,5 +1,7 @@
 local M = {}
 
+local _ = require "buffy.types"
+
 --- Ordered list of tracked buffer handles.
 --- @type integer[]
 M.buf_list = {}

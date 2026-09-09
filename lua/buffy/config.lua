@@ -1,18 +1,7 @@
 local M = {}
 
 local components = require "buffy.components"
-
---- @class BuffyConfig
---- @field max_height number Maximum number of visible lines in the picker.
---- @field auto_track boolean Automatically track buffers opened from the CLI.
---- @field quickpick_chars string Characters available for quickpick labels.
---- @field layout BuffyInput Component layout specification.
---- @field picker BuffyPickerConfig Configuration for the main picker window.
---- @field peek BuffyPickerConfig Configuration for the peek preview window.
-
---- @class BuffyPickerConfig
---- @field border string|string[] Window border style.
---- @field position string Window position: "top", "center", or "bottom".
+local _ = require "buffy.types"
 
 local defaults = {
   max_height = 20,

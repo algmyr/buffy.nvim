@@ -1,5 +1,7 @@
 local M = {}
 
+local _ = require "buffy.types"
+
 --- Return both the tail filename and relative path for a buffer, fetching the
 --- name only once.
 --- @param name string

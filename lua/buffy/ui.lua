@@ -1,6 +1,7 @@
 local M = {}
 
 local state = require "buffy.state"
+local _ = require "buffy.types"
 local config = require "buffy.config"
 local compose = require "buffy.compose"
 

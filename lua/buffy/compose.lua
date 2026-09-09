@@ -1,26 +1,6 @@
 local M = {}
 
---- @class BuffyComponent
---- @field text string
---- @field hl string|nil Highlight group, or { hl_group, priority } tuple.
-
---- @class BuffyContext
---- @field is_hidden boolean Whether the buffer is hidden.
---- @field is_untracked boolean Whether the buffer is untracked.
-
---- A layout spec entry: component table, callable, or literal string.
---- @alias BuffyInput (BuffyComponent|fun(bufnr: integer, ctx: BuffyContext): BuffyComponent?|BuffyInput?|string)[]
-
---- @class BuffyResolvedComponent
---- @field text string
---- @field hl string|nil
---- @field priority number
-
---- @class BuffyHighlight
---- @field col number Byte offset where highlight starts.
---- @field end_col number Byte offset where highlight ends (exclusive).
---- @field hl string Highlight group.
---- @field priority number Extmark priority.
+local _ = require "buffy.types"
 
 --- Normalize a highlight spec into { hl, priority }.
 --- @param hl string|nil|{[1]: string, [2]: number}?
@@ -33,7 +13,7 @@ local function _normalize_hl(hl)
 end
 
 --- Normalize a single layout entry into resolved components.
---- @param item BuffyComponent|fun(bufnr: integer, ctx: BuffyContext): BuffyInput?|string
+--- @param item BuffyComponent|BuffyLayoutFn|string
 --- @param bufnr integer
 --- @param ctx BuffyContext
 --- @return BuffyResolvedComponent[]
