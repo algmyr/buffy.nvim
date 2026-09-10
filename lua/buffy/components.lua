@@ -30,7 +30,7 @@ end
 --- @param bufnr integer
 --- @param ctx BuffyContext
 --- @return BuffyComponent?
-function M.icon(bufnr, ctx)
+function M.icon(bufnr, _ctx)
   local ok, devicons = pcall(require, "nvim-web-devicons")
   if not ok then
     return nil
@@ -86,7 +86,7 @@ end
 --- @param bufnr integer
 --- @param ctx BuffyContext
 --- @return BuffyComponent?
-function M.path(bufnr, ctx)
+function M.path(bufnr, _ctx)
   local name = vim.api.nvim_buf_get_name(bufnr)
   local _, path = _get_name_parts(name)
   local max_path = 60
