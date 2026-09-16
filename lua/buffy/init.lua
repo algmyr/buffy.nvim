@@ -32,6 +32,7 @@ function M.setup(opts)
     group = group,
     callback = function(args)
       state.remove_buffer(args.buf)
+      state.unmark_untracked(args.buf)
     end,
   })
 
@@ -44,6 +45,7 @@ function M.setup(opts)
         if
           vim.bo[bufnr].buftype == ""
           and vim.api.nvim_buf_get_name(bufnr) ~= ""
+          and not state.is_explicitly_untracked(bufnr)
         then
           state.add_buffer(bufnr)
         end

@@ -135,6 +135,7 @@ function M.setup_keymaps()
     if not state.is_tracked(state.selected_bufnr) then
       return
     end
+    state.mark_untracked(state.selected_bufnr)
     state.remove_buffer(state.selected_bufnr)
     ui.render()
   end, opts)
@@ -148,6 +149,7 @@ function M.setup_keymaps()
   vim.keymap.set("n", "a", function()
     M.exit_quickpick()
     if state.selected_bufnr and not state.is_tracked(state.selected_bufnr) then
+      state.unmark_untracked(state.selected_bufnr)
       state.add_buffer(state.selected_bufnr)
       ui.render()
     end

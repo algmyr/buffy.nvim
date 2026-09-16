@@ -10,6 +10,11 @@ M.buf_list = {}
 --- @type table<integer, boolean>
 M.hidden = {}
 
+--- Set of buffer handles explicitly untracked by the user via the picker.
+--- Prevents auto_track from re-adding them on BufEnter.
+--- @type table<integer, boolean>
+M.explicitly_untracked = {}
+
 --- Index into buf_list for next/prev cycling.
 --- @type integer
 M.current_idx = 1
@@ -175,6 +180,25 @@ function M.is_hidden(bufnr)
   return M.hidden[bufnr] == true
 end
 
+--- Mark a buffer as explicitly untracked so auto_track will skip it.
+--- @param bufnr integer
+function M.mark_untracked(bufnr)
+  M.explicitly_untracked[bufnr] = true
+end
+
+--- Remove the explicit-untrack mark from a buffer.
+--- @param bufnr integer
+function M.unmark_untracked(bufnr)
+  M.explicitly_untracked[bufnr] = nil
+end
+
+--- Return true if the buffer was explicitly untracked by the user.
+--- @param bufnr integer
+--- @return boolean
+function M.is_explicitly_untracked(bufnr)
+  return M.explicitly_untracked[bufnr] == true
+end
+
 --- Return true if the buffer is in the tracked list.
 --- @param bufnr integer
 --- @return boolean
@@ -261,6 +285,7 @@ end
 function M.clear()
   M.buf_list = {}
   M.hidden = {}
+  M.explicitly_untracked = {}
   M.current_idx = 1
   M.selected_bufnr = nil
   M.show_all = true
