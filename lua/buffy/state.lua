@@ -64,7 +64,9 @@ function M.remove_buffer(bufnr)
     if b == bufnr then
       table.remove(M.buf_list, i)
       M.hidden[bufnr] = nil
-      if M.current_idx > #M.buf_list then
+      if i < M.current_idx then
+        M.current_idx = M.current_idx - 1
+      elseif M.current_idx > #M.buf_list then
         M.current_idx = math.max(1, #M.buf_list)
       end
       if M.selected_bufnr == bufnr then
