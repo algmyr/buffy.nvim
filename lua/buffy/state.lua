@@ -82,6 +82,28 @@ function M.remove_buffer(bufnr)
   return false
 end
 
+--- Add a buffer after clearing an explicit user removal. Returns true on success.
+--- @param bufnr integer
+--- @return boolean
+function M.track_buffer(bufnr)
+  if not M.add_buffer(bufnr) then
+    return false
+  end
+  M.unmark_untracked(bufnr)
+  return true
+end
+
+--- Remove a buffer and prevent auto-tracking from restoring it. Returns true on success.
+--- @param bufnr integer
+--- @return boolean
+function M.untrack_buffer(bufnr)
+  if not M.remove_buffer(bufnr) then
+    return false
+  end
+  M.mark_untracked(bufnr)
+  return true
+end
+
 --- Return the next visible, valid buffer, wrapping around.
 --- @return integer|nil
 function M.get_next()

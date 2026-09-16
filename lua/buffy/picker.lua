@@ -133,8 +133,7 @@ function M.setup_keymaps()
     if not state.is_tracked(state.selected_bufnr) then
       return
     end
-    state.mark_untracked(state.selected_bufnr)
-    state.remove_buffer(state.selected_bufnr)
+    state.untrack_buffer(state.selected_bufnr)
     ui.render()
   end, opts)
   vim.keymap.set("n", "D", function()
@@ -143,8 +142,7 @@ function M.setup_keymaps()
       return
     end
     local bufnr = state.selected_bufnr
-    state.mark_untracked(bufnr)
-    state.remove_buffer(bufnr)
+    state.untrack_buffer(bufnr)
     vim.api.nvim_buf_delete(bufnr, { force = true })
     ui.render()
   end, opts)
@@ -158,8 +156,7 @@ function M.setup_keymaps()
   vim.keymap.set("n", "a", function()
     M.exit_quickpick()
     if state.selected_bufnr and not state.is_tracked(state.selected_bufnr) then
-      state.unmark_untracked(state.selected_bufnr)
-      state.add_buffer(state.selected_bufnr)
+      state.track_buffer(state.selected_bufnr)
       ui.render()
     end
   end, opts)

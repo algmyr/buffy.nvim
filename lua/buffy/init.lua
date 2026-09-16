@@ -88,7 +88,7 @@ end
 --- Add the current buffer to the tracked list.
 function M.add_current()
   local bufnr = vim.api.nvim_get_current_buf()
-  if state.add_buffer(bufnr) then
+  if state.track_buffer(bufnr) then
     vim.notify("Buffer added to tracked list", vim.log.levels.INFO)
   else
     vim.notify("Buffer already tracked or invalid", vim.log.levels.WARN)
@@ -98,7 +98,7 @@ end
 --- Remove the current buffer from the tracked list.
 function M.remove_current()
   local bufnr = vim.api.nvim_get_current_buf()
-  if state.remove_buffer(bufnr) then
+  if state.untrack_buffer(bufnr) then
     vim.notify("Buffer removed from tracked list", vim.log.levels.INFO)
   else
     vim.notify("Buffer not in tracked list", vim.log.levels.WARN)
