@@ -47,6 +47,7 @@ function M.show_help()
     "<Space>   Quick-pick mode",
     "a         Add buffer to tracked list",
     "d         Remove from list",
+    "D         Close buffer",
     "x         Toggle hide",
     "z         Toggle show all buffers",
     "q/Esc     Close",
@@ -137,6 +138,17 @@ function M.setup_keymaps()
     end
     state.mark_untracked(state.selected_bufnr)
     state.remove_buffer(state.selected_bufnr)
+    ui.render()
+  end, opts)
+  vim.keymap.set("n", "D", function()
+    M.exit_quickpick()
+    if not state.is_tracked(state.selected_bufnr) then
+      return
+    end
+    local bufnr = state.selected_bufnr
+    state.mark_untracked(bufnr)
+    state.remove_buffer(bufnr)
+    vim.api.nvim_buf_delete(bufnr, { force = true })
     ui.render()
   end, opts)
   vim.keymap.set("n", "x", function()
