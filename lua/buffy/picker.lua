@@ -35,7 +35,6 @@ end
 
 --- Close the picker.
 function M.close()
-  state.quickpick = false
   ui.close()
 end
 

@@ -42,6 +42,7 @@ end
 
 --- Tear down the picker window, buffer, and autocmds.
 function M.close()
+  state.quickpick = false
   if M.autocmd then
     vim.api.nvim_del_autocmd(M.autocmd)
     M.autocmd = nil
