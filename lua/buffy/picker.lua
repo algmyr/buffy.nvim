@@ -43,14 +43,14 @@ function M.show_help()
   local lines = {
     "j/k       Move selection",
     "J/K       Reorder buffer",
-    "<CR>/o    Select buffer",
+    "<CR>      Select buffer",
     "<Space>   Quick-pick mode",
     "a         Add buffer to tracked list",
     "d         Remove from list",
     "D         Close buffer",
     "x         Toggle hide",
     "z         Toggle show all buffers",
-    "q/Esc     Close",
+    "Esc       Close",
   }
   vim.notify(table.concat(lines, "\n"), vim.log.levels.INFO)
 end
@@ -64,8 +64,6 @@ function M.setup_keymaps()
   local opts = { buffer = ui.buf, noremap = true, silent = true, nowait = true }
 
   vim.keymap.set("n", "<CR>", M.select, opts)
-  vim.keymap.set("n", "o", M.select, opts)
-  vim.keymap.set("n", "q", M.close, opts)
   vim.keymap.set("n", "<Esc>", function()
     if state.quickpick then
       M.exit_quickpick()
