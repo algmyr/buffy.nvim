@@ -388,6 +388,7 @@ function M.peek(current_bufnr)
   vim.bo[M.peek_buf].modifiable = false
 
   local ns = vim.api.nvim_create_namespace "buffy_peek"
+  vim.api.nvim_buf_clear_namespace(M.peek_buf, ns, 0, -1)
   for line_idx, highlights in ipairs(all_highlights) do
     _apply_line_highlights(M.peek_buf, line_idx - 1, highlights, ns)
   end
