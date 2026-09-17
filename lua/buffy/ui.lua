@@ -337,13 +337,14 @@ end
 --- current_bufnr. The window auto-closes after a short delay.
 --- @param current_bufnr integer
 function M.peek(current_bufnr)
-  if M.peek_timer then
-    M.peek_timer:stop()
-  end
-
   local visible = state.get_visible()
   if #visible == 0 then
+    M.peek_close()
     return
+  end
+
+  if M.peek_timer then
+    M.peek_timer:stop()
   end
 
   local cfg = config.get()
