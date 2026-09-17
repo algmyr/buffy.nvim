@@ -2,6 +2,29 @@ local M = {}
 
 local _ = require "buffy.types"
 
+--- Return name relative to directory when it is contained by that directory.
+--- @param name string
+--- @param directory string
+--- @param prefix string
+--- @return string|nil
+local function _relative_to(name, directory, prefix)
+  if name == directory then
+    return ""
+  end
+
+  if directory == "/" then
+    if name:sub(1, 1) == "/" then
+      return name:sub(2)
+    end
+    return nil
+  end
+
+  local path_prefix = directory .. "/"
+  if name:sub(1, #path_prefix) == path_prefix then
+    return prefix .. name:sub(#path_prefix + 1)
+  end
+end
+
 --- Return both the tail filename and relative path for a buffer, fetching the
 --- name only once.
 --- @param name string
@@ -14,13 +37,15 @@ local function _get_name_parts(name)
   local filename = vim.fn.fnamemodify(name, ":t")
 
   local cwd = vim.fn.getcwd()
-  if name:sub(1, #cwd) == cwd then
-    return filename, name:sub(#cwd + 2)
+  local path = _relative_to(name, cwd, "")
+  if path then
+    return filename, path
   end
 
   local home = vim.fn.expand "~"
-  if name:sub(1, #home) == home then
-    return filename, "~/" .. name:sub(#home + 2)
+  path = _relative_to(name, home, "~/")
+  if path then
+    return filename, path
   end
 
   return filename, name
