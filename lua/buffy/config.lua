@@ -31,7 +31,7 @@ local options = nil
 --- @param opts BuffyConfig|nil
 function M.setup(opts)
   ---@diagnostic disable-next-line: param-type-mismatch
-  options = vim.tbl_deep_extend("force", defaults, opts or {})
+  options = vim.tbl_deep_extend("force", {}, defaults, opts or {})
 end
 
 --- Return the current configuration.
