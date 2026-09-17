@@ -20,13 +20,17 @@ function M.setup(opts)
 
   local group = vim.api.nvim_create_augroup("Buffy", { clear = true })
 
-  vim.api.nvim_create_autocmd("VimEnter", {
-    group = group,
-    once = true,
-    callback = function()
-      state.init_from_cli()
-    end,
-  })
+  -- Late-loaded configurations cannot observe an already-fired VimEnter event,
+  -- so try detecting and handling this case.
+  if vim.v.vim_did_enter == 1 then
+    state.init_from_cli()
+  else
+    vim.api.nvim_create_autocmd("VimEnter", {
+      group = group,
+      once = true,
+      callback = state.init_from_cli,
+    })
+  end
 
   vim.api.nvim_create_autocmd("BufDelete", {
     group = group,
