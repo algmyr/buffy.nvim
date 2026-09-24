@@ -20,7 +20,6 @@ local M = {}
 
 --- Context passed to layout functions.
 --- @class BuffyContext
---- @field is_hidden boolean Whether the buffer is hidden.
 --- @field is_untracked boolean Whether the buffer is untracked.
 
 --- A function that returns a component or another layout spec.

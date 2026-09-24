@@ -47,7 +47,6 @@ function M.show_help()
     "a         Add buffer to tracked list",
     "d         Remove from list",
     "D         Close buffer",
-    "x         Toggle hide",
     "z         Toggle show all buffers",
     "Esc       Close",
   }
@@ -145,13 +144,6 @@ function M.setup_keymaps()
     state.untrack_buffer(bufnr)
     vim.api.nvim_buf_delete(bufnr, { force = true })
     ui.render()
-  end, opts)
-  vim.keymap.set("n", "x", function()
-    M.exit_quickpick()
-    if state.is_tracked(state.selected_bufnr) then
-      state.toggle_hidden(state.selected_bufnr)
-      ui.render()
-    end
   end, opts)
   vim.keymap.set("n", "a", function()
     M.exit_quickpick()

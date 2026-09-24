@@ -86,15 +86,12 @@ function M.filename(bufnr, ctx)
   return { text = filename }
 end
 
---- Buffer state markers: [H] hidden, [+] modified, [=] readonly.
+--- Buffer state markers: [+] modified, [=] readonly.
 --- @param bufnr integer
 --- @param ctx BuffyContext
 --- @return BuffyComponent?
-function M.markers(bufnr, ctx)
+function M.markers(bufnr, _ctx)
   local marks = ""
-  if ctx.is_hidden then
-    marks = marks .. "H"
-  end
   if vim.bo[bufnr].modified then
     marks = marks .. "+"
   end

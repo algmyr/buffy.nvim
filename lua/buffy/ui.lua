@@ -70,7 +70,6 @@ end
 --- @return BuffyContext
 local function _make_ctx(bufnr)
   return {
-    is_hidden = state.is_hidden(bufnr),
     is_untracked = state.show_all and not state.is_tracked(bufnr),
   }
 end

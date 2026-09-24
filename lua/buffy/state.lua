@@ -6,10 +6,6 @@ local _ = require "buffy.types"
 --- @type integer[]
 M.buf_list = {}
 
---- Set of buffer handles the user has hidden from navigation.
---- @type table<integer, boolean>
-M.hidden = {}
-
 --- Set of buffer handles explicitly untracked by the user via the picker.
 --- Prevents auto_track from re-adding them on BufEnter.
 --- @type table<integer, boolean>
@@ -63,7 +59,6 @@ function M.remove_buffer(bufnr)
   for i, b in ipairs(M.buf_list) do
     if b == bufnr then
       table.remove(M.buf_list, i)
-      M.hidden[bufnr] = nil
       if i < M.current_idx then
         M.current_idx = M.current_idx - 1
       elseif M.current_idx > #M.buf_list then
@@ -104,7 +99,7 @@ function M.untrack_buffer(bufnr)
   return true
 end
 
---- Return the next visible, valid buffer, wrapping around.
+--- Return the next valid buffer, wrapping around.
 --- @return integer|nil
 function M.get_next()
   if #M.buf_list == 0 then
@@ -115,10 +110,7 @@ function M.get_next()
   repeat
     M.current_idx = M.current_idx % #M.buf_list + 1
     local bufnr = M.buf_list[M.current_idx]
-    if
-      not M.hidden[bufnr]
-      and (not M.buf_provider or M.buf_provider.is_valid(bufnr))
-    then
+    if not M.buf_provider or M.buf_provider.is_valid(bufnr) then
       return bufnr
     end
   until M.current_idx == start
@@ -126,7 +118,7 @@ function M.get_next()
   return nil
 end
 
---- Return the previous visible, valid buffer, wrapping around.
+--- Return the previous valid buffer, wrapping around.
 --- @return integer|nil
 function M.get_prev()
   if #M.buf_list == 0 then
@@ -137,10 +129,7 @@ function M.get_prev()
   repeat
     M.current_idx = (M.current_idx - 2) % #M.buf_list + 1
     local bufnr = M.buf_list[M.current_idx]
-    if
-      not M.hidden[bufnr]
-      and (not M.buf_provider or M.buf_provider.is_valid(bufnr))
-    then
+    if not M.buf_provider or M.buf_provider.is_valid(bufnr) then
       return bufnr
     end
   until M.current_idx == start
@@ -187,23 +176,6 @@ function M.move_buffer(from_idx, to_idx)
   return true
 end
 
---- Toggle the hidden flag on a buffer.
---- @param bufnr integer
-function M.toggle_hidden(bufnr)
-  if M.hidden[bufnr] then
-    M.hidden[bufnr] = nil
-  else
-    M.hidden[bufnr] = true
-  end
-end
-
---- Return true if the buffer is hidden.
---- @param bufnr integer
---- @return boolean
-function M.is_hidden(bufnr)
-  return M.hidden[bufnr] == true
-end
-
 --- Mark a buffer as explicitly untracked so auto_track will skip it.
 --- @param bufnr integer
 function M.mark_untracked(bufnr)
@@ -235,15 +207,12 @@ function M.is_tracked(bufnr)
   return false
 end
 
---- Return tracked buffers that are neither hidden nor invalid.
+--- Return tracked buffers that are valid.
 --- @return integer[]
 function M.get_visible()
   local visible = {}
   for _, bufnr in ipairs(M.buf_list) do
-    if
-      not M.hidden[bufnr]
-      and (not M.buf_provider or M.buf_provider.is_valid(bufnr))
-    then
+    if not M.buf_provider or M.buf_provider.is_valid(bufnr) then
       table.insert(visible, bufnr)
     end
   end
@@ -308,7 +277,6 @@ end
 --- Reset all state to initial values.
 function M.clear()
   M.buf_list = {}
-  M.hidden = {}
   M.explicitly_untracked = {}
   M.current_idx = 1
   M.selected_bufnr = nil
