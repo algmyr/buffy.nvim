@@ -44,8 +44,7 @@ function M.show_help()
     "J/K       Reorder buffer",
     "<CR>      Select buffer",
     "<Space>   Quick-pick mode",
-    "a         Add buffer to tracked list",
-    "d         Remove from list",
+    "d         Toggle tracked",
     "D         Close buffer",
     "z         Toggle show all buffers",
     "Esc       Close",
@@ -129,11 +128,9 @@ function M.setup_keymaps()
 
   vim.keymap.set("n", "d", function()
     M.exit_quickpick()
-    if not state.is_tracked(state.selected_bufnr) then
-      return
+    if state.selected_bufnr and state.toggle_tracked(state.selected_bufnr) then
+      ui.render()
     end
-    state.untrack_buffer(state.selected_bufnr)
-    ui.render()
   end, opts)
   vim.keymap.set("n", "D", function()
     M.exit_quickpick()
@@ -144,13 +141,6 @@ function M.setup_keymaps()
     state.untrack_buffer(bufnr)
     vim.api.nvim_buf_delete(bufnr, { force = true })
     ui.render()
-  end, opts)
-  vim.keymap.set("n", "a", function()
-    M.exit_quickpick()
-    if state.selected_bufnr and not state.is_tracked(state.selected_bufnr) then
-      state.track_buffer(state.selected_bufnr)
-      ui.render()
-    end
   end, opts)
   vim.keymap.set("n", "z", function()
     state.show_all = not state.show_all

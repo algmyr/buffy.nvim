@@ -99,6 +99,16 @@ function M.untrack_buffer(bufnr)
   return true
 end
 
+--- Flip tracked membership for a buffer. Returns true on success.
+--- @param bufnr integer
+--- @return boolean
+function M.toggle_tracked(bufnr)
+  if M.is_tracked(bufnr) then
+    return M.untrack_buffer(bufnr)
+  end
+  return M.track_buffer(bufnr)
+end
+
 --- Return the next valid buffer, wrapping around.
 --- @return integer|nil
 function M.get_next()
