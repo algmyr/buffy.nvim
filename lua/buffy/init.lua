@@ -47,7 +47,8 @@ function M.setup(opts)
       if cfg.auto_track then
         local bufnr = args.buf
         if
-          vim.bo[bufnr].buftype == ""
+          vim.bo[bufnr].buflisted
+          and vim.bo[bufnr].buftype == ""
           and vim.api.nvim_buf_get_name(bufnr) ~= ""
           and not state.is_explicitly_untracked(bufnr)
         then

@@ -225,11 +225,14 @@ function M.get_all()
   return M.buf_list
 end
 
---- Return true if the buffer is a normal file buffer worth tracking.
+--- Return true if the buffer is a listed, normal file buffer worth tracking.
 --- @param bufnr integer
 --- @return boolean
 local function _is_ok_buffer(bufnr)
   if not M.buf_provider or not M.buf_provider.is_valid(bufnr) then
+    return false
+  end
+  if not M.buf_provider.is_listed(bufnr) then
     return false
   end
   local name = M.buf_provider.get_name(bufnr)
@@ -240,7 +243,7 @@ local function _is_ok_buffer(bufnr)
     and bt == ""
 end
 
---- Return all system buffers that are valid, non-empty, non-protocol, and normal.
+--- Return all listed system buffers that are valid, non-empty, non-protocol, and normal.
 --- @return integer[]
 function M.get_system_bufs()
   if not M.buf_provider then

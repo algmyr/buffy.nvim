@@ -48,6 +48,7 @@ local M = {}
 --- @field is_valid fun(bufnr: integer): boolean
 --- @field get_name fun(bufnr: integer): string
 --- @field get_buftype fun(bufnr: integer): string
+--- @field is_listed fun(bufnr: integer): boolean
 --- @field get_current_buf fun(): integer
 --- @field set_current_buf fun(bufnr: integer)
 

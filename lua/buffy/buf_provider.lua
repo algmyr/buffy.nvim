@@ -29,6 +29,13 @@ function M.get_buftype(bufnr)
   return vim.bo[bufnr].buftype
 end
 
+--- Check whether a buffer is listed, i.e. appears in :ls and :b.
+--- @param bufnr integer
+--- @return boolean
+function M.is_listed(bufnr)
+  return vim.bo[bufnr].buflisted
+end
+
 --- Return the currently focused buffer handle.
 --- @return integer
 function M.get_current_buf()
